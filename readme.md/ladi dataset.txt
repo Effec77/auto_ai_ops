@@ -1,0 +1,1 @@
+https://ladi.s3.amazonaws.com/ladi_v2_resized.tar.gz

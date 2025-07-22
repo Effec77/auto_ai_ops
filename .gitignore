@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pt
+*.pkl
+*.h5
+*.zip
+*.jpg
+*.jpeg
+*.tar.gz
+images/
+data/
+*.ipynb_checkpoints/

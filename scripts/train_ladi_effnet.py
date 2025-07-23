@@ -1,3 +1,6 @@
+# Upgraded script with EfficientNet-B3, batch size = 16, data augmentation,
+# label smoothing, and optimizer/scheduler enhancements
+
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -15,9 +18,9 @@ import numpy as np
 csv_path = "D:/images/v2/ladi_v2_labels_train_full_resized.csv"
 images_root = "D:/images"
 
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 EPOCHS = 10
-IMG_SIZE = 224
+IMG_SIZE = 300
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ========== Load Data ==========
@@ -29,11 +32,13 @@ df = df[df['full_path'].apply(os.path.exists)].copy()
 # Detect multi-label columns
 metadata_cols = {'url', 'local_path'}
 label_columns = [col for col in df.columns if col not in metadata_cols and df[col].dropna().isin([0, 1]).all()]
-print(f"📌 Multi-label columns: {label_columns}")
+print(f"\U0001F4CC Multi-label columns: {label_columns}")
 num_classes = len(label_columns)
 
 # Train-val split
+# Fallback: standard split (still acceptable for large datasets)
 train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
+
 
 # ========== Dataset ==========
 class LadiDataset(Dataset):
@@ -52,24 +57,35 @@ class LadiDataset(Dataset):
             image = self.transform(image)
         return image, torch.tensor(labels)
 
-transform = transforms.Compose([
+# ========== Transforms ==========
+train_transform = transforms.Compose([
+    transforms.Resize((IMG_SIZE, IMG_SIZE)),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(15),
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+    transforms.ToTensor(),
+])
+
+val_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.ToTensor(),
 ])
 
-train_loader = DataLoader(LadiDataset(train_df, transform), batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
-val_loader = DataLoader(LadiDataset(val_df, transform), batch_size=BATCH_SIZE, pin_memory=True)
+train_loader = DataLoader(LadiDataset(train_df, train_transform), batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
+val_loader = DataLoader(LadiDataset(val_df, val_transform), batch_size=BATCH_SIZE, pin_memory=True)
 
 # ========== Model ==========
-model = timm.create_model("efficientnet_b0", pretrained=True, num_classes=num_classes)
+model = timm.create_model("efficientnet_b3", pretrained=True, num_classes=num_classes)
 model.to(DEVICE)
 
+# ========== Loss, Optimizer, Scheduler ==========
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
 best_f1 = 0.0
 
-# ========== Training ==========
+# ========== Training Loop ==========
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
@@ -82,9 +98,9 @@ for epoch in range(EPOCHS):
         optimizer.step()
         total_loss += loss.item()
 
-    print(f"✅ Epoch {epoch+1}: Train Loss = {total_loss:.4f}")
+    print(f"\✅ Epoch {epoch+1}: Train Loss = {total_loss:.4f}")
 
-    # ========== Validation ==========
+    # Validation
     model.eval()
     all_preds, all_labels = [], []
     with torch.no_grad():
@@ -102,12 +118,13 @@ for epoch in range(EPOCHS):
     f1 = f1_score(all_labels, binarized_preds, average='micro', zero_division=0)
     precision = precision_score(all_labels, binarized_preds, average='micro', zero_division=0)
     recall = recall_score(all_labels, binarized_preds, average='micro', zero_division=0)
-    print(f"📊 F1: {f1:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}")
+    print(f"\📊 F1: {f1:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}")
 
-    # Save best model
     if f1 > best_f1:
         best_f1 = f1
-        torch.save(model.state_dict(), "best_effnet_ladi_multilabel.pth")
-        print("💾 Model saved (Best F1 so far)")
+        torch.save(model.state_dict(), "best_effnet_b3_multilabel.pth")
+        print("📀 Model saved (Best F1 so far)")
+
+    scheduler.step()
 
 print("✅ Training complete.")

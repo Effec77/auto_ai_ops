@@ -1,0 +1,50 @@
+[
+  {
+    "image_name": "DSC_0215_f75905a2-f620-42b1-84bb-7fddea504abe.jpg",
+    "latitude": 19.076,
+    "longitude": 72.8777,
+    "timestamp": "2025-07-24 11:32:00",
+    "predicted_labels": [
+      "buildings_any",
+      "roads_any",
+      "trees_any",
+      "water_any"
+    ]
+  },
+  {
+    "image_name": "DSC_0727_ca544b99-b1b9-47e8-92d4-628c5cc019a5.jpg",
+    "latitude": 18.5204,
+    "longitude": 73.8567,
+    "timestamp": "2025-07-24 11:45:00",
+    "predicted_labels": [
+      "trees_any",
+      "water_any"
+    ]
+  },
+  {
+    "image_name": "DSC_2301_0c742829-62c3-431f-ae51-498c4cf2a982.jpg",
+    "latitude": 28.7041,
+    "longitude": 77.1025,
+    "timestamp": "2025-07-24 12:00:00",
+    "predicted_labels": [
+      "trees_any",
+      "water_any"
+    ]
+  },
+  {
+    "image_name": "DSC_5210_34a84223-8bec-4bff-9acf-433c13b2892d.jpg",
+    "latitude": 15.2993,
+    "longitude": 74.124,
+    "timestamp": "2025-07-24 12:15:00",
+    "predicted_labels": [
+      "buildings_affected",
+      "buildings_any",
+      "flooding_any",
+      "flooding_structures",
+      "roads_any",
+      "trees_any",
+      "trees_damage",
+      "water_any"
+    ]
+  }
+]

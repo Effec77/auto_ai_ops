@@ -1,13 +1,12 @@
 import torch
 
-# Check if CUDA is available
-print("CUDA Available:", torch.cuda.is_available())
+model_path = "D:/Auto_aiops/checkpoints/best_effnet_b3_multilabel.pth"
+state_dict = torch.load(model_path, map_location="cpu")
 
-# Check which device a tensor would be on
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Using device:", device)
+print("Loaded object type:", type(state_dict))
 
-# Check current GPU name (if any)
-if torch.cuda.is_available():
-    print("GPU Name:", torch.cuda.get_device_name(0))
-    print("Current CUDA Device:", torch.cuda.current_device())
+if isinstance(state_dict, dict):
+    print("Top-level keys:", state_dict.keys())
+
+
+

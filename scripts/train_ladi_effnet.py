@@ -15,8 +15,9 @@ from tqdm import tqdm
 import numpy as np
 
 # ========== Config ==========
-csv_path = "D:/images/v2/ladi_v2_labels_train_full_resized.csv"
-images_root = "D:/images"
+csv_path = "D:/ladidataset/ladi_v2_resized/v2/ladi_v2_labels_train_full_resized.csv"
+images_root = "D:/ladidataset/ladi_v2_resized/"
+
 
 BATCH_SIZE = 16
 EPOCHS = 10

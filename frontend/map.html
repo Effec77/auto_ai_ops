@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Disaster Map - AidFlow AI</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        #map { height: 100vh; width: 100%; }
+
+        /* Legend styling fixed in place around Andaman & Nicobar */
+        .legend {
+            position: absolute;
+            top: 450px; /* Adjust vertically */
+            right: 20px; /* Adjust horizontally */
+            background: white;
+            padding: 8px;
+            border-radius: 5px;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+            font-size: 14px;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .legend div { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="legend" id="legend"><strong>Disasters</strong></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([22.5, 79.0], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Disaster colors
+    const disasterColors = {
+        "bridges_any": "blue",
+        "bridges_damage": "darkblue",
+        "buildings_affected": "orange",
+        "buildings_any": "gold",
+        "buildings_destroyed": "red",
+        "buildings_major": "darkred",
+        "buildings_minor": "pink",
+        "debris_any": "brown",
+        "flooding_any": "purple",
+        "flooding_structures": "darkviolet",
+        "roads_any": "gray",
+        "roads_damage": "black",
+        "trees_any": "green",
+        "trees_damage": "darkgreen",
+        "water_any": "cyan"
+    };
+
+    const labelMapping = {
+        "bridges_any": "Bridges",
+        "bridges_damage": "Bridges Damage",
+        "buildings_affected": "Buildings Affected",
+        "buildings_any": "Buildings",
+        "buildings_destroyed": "Buildings Destroyed",
+        "buildings_major": "Buildings Major",
+        "buildings_minor": "Buildings Minor",
+        "debris_any": "Debris",
+        "flooding_any": "Flooding",
+        "flooding_structures": "Flooding Structures",
+        "roads_any": "Roads",
+        "roads_damage": "Roads Damage",
+        "trees_any": "Trees",
+        "trees_damage": "Trees Damage",
+        "water_any": "Water"
+    };
+
+    // Populate legend
+    const legendDiv = document.getElementById('legend');
+    for (const key in disasterColors) {
+        if (disasterColors.hasOwnProperty(key)) {
+            const color = disasterColors[key];
+            const label = labelMapping[key];
+            const entry = document.createElement('div');
+            entry.innerHTML = `<span style="color:${color}">●</span> ${label}`;
+            legendDiv.appendChild(entry);
+        }
+    }
+
+    // Load GeoJSON data
+    fetch('predictions_map.geojson')
+    .then(response => response.json())
+    .then(data => {
+        var markers = [];
+
+        data.features.forEach(feature => {
+            var lat = feature.geometry.coordinates[1];
+            var lon = feature.geometry.coordinates[0];
+
+            var disastersDetected = [];
+            for (var key in feature.properties) {
+                if (feature.properties.hasOwnProperty(key) && disasterColors[key]) {
+                    if (feature.properties[key] > 0.5) {
+                        disastersDetected.push(labelMapping[key]);
+                    }
+                }
+            }
+
+            // Determine marker color
+            var color = disastersDetected.length > 0 ? disasterColors[Object.keys(disasterColors).find(k => disastersDetected.includes(labelMapping[k]))] : "gray";
+
+            // Create original Leaflet marker
+            var marker = L.marker([lat, lon]).addTo(map);
+
+            // Add colored circle around original marker to indicate disaster
+            var circle = L.circleMarker([lat, lon], {
+                radius: 8,
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.7,
+                weight: 2
+            }).addTo(map);
+
+            // Popup content
+            var popupContent = disastersDetected.length > 0 ? "Disasters detected:<br>- " + disastersDetected.join("<br>- ") : "Disasters detected: None";
+            marker.bindPopup(popupContent);
+            circle.bindPopup(popupContent);
+
+            markers.push(marker);
+        });
+
+        var group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+    });
+</script>
+</body>
+</html>

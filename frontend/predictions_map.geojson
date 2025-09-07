@@ -1,0 +1,306 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          78.31660750824553,
+          30.628253880932053
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\CAP_-_Hur_Ian_Sept_2022\\Source\\23-1-3141\\A0023A\\1_000_02_199.jpg",
+        "lat": 30.628253880932053,
+        "lon": 78.31660750824553,
+        "bridges_any": 0.0024119410663843155,
+        "bridges_damage": 1.5009280105005018e-05,
+        "buildings_affected": 0.005805817432701588,
+        "buildings_any": 0.9990400671958923,
+        "buildings_destroyed": 0.0014197073178365827,
+        "buildings_major": 0.0008029209566302598,
+        "buildings_minor": 0.009221469052135944,
+        "debris_any": 0.030596747994422913,
+        "flooding_any": 0.0026416415348649025,
+        "flooding_structures": 6.521154136862606e-05,
+        "roads_any": 0.9999300241470337,
+        "roads_damage": 0.00021506095072254539,
+        "trees_any": 0.9973878264427185,
+        "trees_damage": 0.020677221938967705,
+        "water_any": 0.08702358603477478
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          75.28026072047453,
+          17.733056205938357
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\CAP_-_Hur_Ian_Sept_2022\\Source\\23-1-3141\\A0051\\1_000_08_083.jpg",
+        "lat": 17.733056205938357,
+        "lon": 75.28026072047453,
+        "bridges_any": 0.00236709788441658,
+        "bridges_damage": 0.001582284108735621,
+        "buildings_affected": 0.8047497868537903,
+        "buildings_any": 0.7598145604133606,
+        "buildings_destroyed": 0.003539806231856346,
+        "buildings_major": 0.0005052085034549236,
+        "buildings_minor": 0.003009088570252061,
+        "debris_any": 0.019972514361143112,
+        "flooding_any": 0.9939858913421631,
+        "flooding_structures": 0.9422371983528137,
+        "roads_any": 0.5829421281814575,
+        "roads_damage": 0.1561659872531891,
+        "trees_any": 0.9999009370803833,
+        "trees_damage": 0.7372214198112488,
+        "water_any": 0.9999349117279053
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.18015056648093,
+          27.794585499436472
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9074\\613727\\DSC_0728_b024ec77-8c09-43ae-9cb3-6e1048f3e4bf.jpg",
+        "lat": 27.794585499436472,
+        "lon": 79.18015056648093,
+        "bridges_any": 0.03098844178020954,
+        "bridges_damage": 0.0026110948529094458,
+        "buildings_affected": 0.0009865331230685115,
+        "buildings_any": 0.009929154999554157,
+        "buildings_destroyed": 0.0006364832515828311,
+        "buildings_major": 0.0015779464738443494,
+        "buildings_minor": 0.003003874560818076,
+        "debris_any": 0.0022721479181200266,
+        "flooding_any": 0.035687852650880814,
+        "flooding_structures": 0.0006531681283377111,
+        "roads_any": 0.0798506885766983,
+        "roads_damage": 0.0028368886560201645,
+        "trees_any": 0.9860915541648865,
+        "trees_damage": 0.0009105691569857299,
+        "water_any": 0.9957531690597534
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.07283624454519,
+          22.572814314759288
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\CAP_-_TS_Fiona_Sept_2022\\Source\\22-1-5800\\A0018\\0_000_08_044.jpg",
+        "lat": 22.572814314759288,
+        "lon": 83.07283624454519,
+        "bridges_any": 0.004095611162483692,
+        "bridges_damage": 0.0021746607962995768,
+        "buildings_affected": 0.00603058934211731,
+        "buildings_any": 0.9972862005233765,
+        "buildings_destroyed": 0.0011474480852484703,
+        "buildings_major": 0.015466514974832535,
+        "buildings_minor": 0.02227991633117199,
+        "debris_any": 0.019037246704101562,
+        "flooding_any": 0.0030861750710755587,
+        "flooding_structures": 0.0020779466722160578,
+        "roads_any": 0.9787166714668274,
+        "roads_damage": 0.0026732285041362047,
+        "trees_any": 0.6810091733932495,
+        "trees_damage": 0.048300910741090775,
+        "water_any": 0.13591322302818298
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          76.89846170816628,
+          13.096882450168653
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9213\\618249\\1_000_12442eae96-3271-4976-bed3-343fe71754f2.jpg",
+        "lat": 13.096882450168653,
+        "lon": 76.89846170816628,
+        "bridges_any": 0.007365145720541477,
+        "bridges_damage": 0.0005286693340167403,
+        "buildings_affected": 7.604937127325684e-05,
+        "buildings_any": 0.006964434869587421,
+        "buildings_destroyed": 0.0001646680320845917,
+        "buildings_major": 3.716210267157294e-05,
+        "buildings_minor": 4.0987575630424544e-05,
+        "debris_any": 7.378563896054402e-05,
+        "flooding_any": 0.016605164855718613,
+        "flooding_structures": 2.0961395421181805e-05,
+        "roads_any": 0.07588900625705719,
+        "roads_damage": 0.00044966142741031945,
+        "trees_any": 0.9968085885047913,
+        "trees_damage": 0.00463846093043685,
+        "water_any": 0.9925577640533447
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.98128845359025,
+          27.940954779375833
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\CAP_-_KY_Flooding_July_2022\\Source\\22-1-5611\\A0028\\0_000_08_052.jpg",
+        "lat": 27.940954779375833,
+        "lon": 74.98128845359025,
+        "bridges_any": 0.0047554755583405495,
+        "bridges_damage": 0.0003385503950994462,
+        "buildings_affected": 0.0012104212073609233,
+        "buildings_any": 0.13515733182430267,
+        "buildings_destroyed": 0.0002014143392443657,
+        "buildings_major": 0.0009818676626309752,
+        "buildings_minor": 0.0006025349721312523,
+        "debris_any": 0.003438674146309495,
+        "flooding_any": 0.012529094703495502,
+        "flooding_structures": 0.0038499687798321247,
+        "roads_any": 0.5630899667739868,
+        "roads_damage": 0.0007362306350842118,
+        "trees_any": 0.9662339091300964,
+        "trees_damage": 0.016387922689318657,
+        "water_any": 0.032848846167325974
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          80.42027501172338,
+          24.069486131339602
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9075\\614011\\A0008AP-_c0b66942-7c31-414e-b263-f6bc2b9ef810.jpg",
+        "lat": 24.069486131339602,
+        "lon": 80.42027501172338,
+        "bridges_any": 0.0006950930110178888,
+        "bridges_damage": 0.0022385516203939915,
+        "buildings_affected": 0.013988076709210873,
+        "buildings_any": 0.029735995456576347,
+        "buildings_destroyed": 0.04865800589323044,
+        "buildings_major": 0.0013326742919161916,
+        "buildings_minor": 0.02139279432594776,
+        "debris_any": 0.03694551810622215,
+        "flooding_any": 0.31754159927368164,
+        "flooding_structures": 0.005576079711318016,
+        "roads_any": 0.048665206879377365,
+        "roads_damage": 0.02037721872329712,
+        "trees_any": 0.4245767891407013,
+        "trees_damage": 0.06283897906541824,
+        "water_any": 0.9929949641227722
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.3451401224851,
+          9.939739167964605
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9213\\618261\\1_000_1976e2a714-7127-4dfd-af92-1afeccca238f.jpg",
+        "lat": 9.939739167964605,
+        "lon": 77.3451401224851,
+        "bridges_any": 0.00030020877602510154,
+        "bridges_damage": 0.0005766040412709117,
+        "buildings_affected": 0.005541929975152016,
+        "buildings_any": 0.017053229734301567,
+        "buildings_destroyed": 0.033744052052497864,
+        "buildings_major": 0.005686316639184952,
+        "buildings_minor": 0.01605997420847416,
+        "debris_any": 0.03293882682919502,
+        "flooding_any": 0.0010015286970883608,
+        "flooding_structures": 0.0005059007089585066,
+        "roads_any": 0.09741213917732239,
+        "roads_damage": 0.0008410952868871391,
+        "trees_any": 0.7943302989006042,
+        "trees_damage": 0.16771358251571655,
+        "water_any": 0.1884813755750656
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          96.18827335259276,
+          29.176916631088705
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9132\\615935\\DSC_1452_bfaa2a32-5c2d-4d2e-aec8-e6516c590d06.jpg",
+        "lat": 29.176916631088705,
+        "lon": 96.18827335259276,
+        "bridges_any": 0.9997732043266296,
+        "bridges_damage": 0.025601515546441078,
+        "buildings_affected": 0.684581458568573,
+        "buildings_any": 0.9048976898193359,
+        "buildings_destroyed": 0.0003751330659724772,
+        "buildings_major": 0.002033746335655451,
+        "buildings_minor": 0.0008785478421486914,
+        "debris_any": 0.00043257084325887263,
+        "flooding_any": 0.942351222038269,
+        "flooding_structures": 0.5120248198509216,
+        "roads_any": 0.9985670447349548,
+        "roads_damage": 0.10610835254192352,
+        "trees_any": 0.9979016780853271,
+        "trees_damage": 0.7586863040924072,
+        "water_any": 0.9980111122131348
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.74981824762158,
+          24.65316913097531
+        ]
+      },
+      "properties": {
+        "image_path": "D:\\ladidataset\\ladi_v2_resized\\v2\\images_resized\\9099\\615177\\DSC_3534_14bb54dc-665c-4f21-bd7f-84e5d5d046ae.jpg",
+        "lat": 24.65316913097531,
+        "lon": 85.74981824762158,
+        "bridges_any": 0.0008297528838738799,
+        "bridges_damage": 0.0003325595462229103,
+        "buildings_affected": 0.9578089118003845,
+        "buildings_any": 0.9744904637336731,
+        "buildings_destroyed": 0.16191057860851288,
+        "buildings_major": 0.2338094264268875,
+        "buildings_minor": 0.6207859516143799,
+        "debris_any": 0.6780156493186951,
+        "flooding_any": 0.0028089683037251234,
+        "flooding_structures": 0.001959884772077203,
+        "roads_any": 0.5953298807144165,
+        "roads_damage": 0.038881298154592514,
+        "trees_any": 0.9989014863967896,
+        "trees_damage": 0.9971858859062195,
+        "water_any": 0.01626765914261341
+      }
+    }
+  ],
+  "name": "predictions_map"
+}

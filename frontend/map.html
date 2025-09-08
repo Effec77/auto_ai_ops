@@ -24,15 +24,56 @@
         }
 
         .legend div { margin-bottom: 4px; }
+
+        /* Simple control panel for loading routes */
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background: rgba(255,255,255,0.95);
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 0 6px rgba(0,0,0,0.2);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+        .controls input[type="text"] {
+            width: 260px;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+        }
+        .controls button {
+            padding: 6px 10px;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
 <div id="map"></div>
+<div class="controls">
+    <div>
+        <label><strong>Load route by path</strong></label><br/>
+        <input id="routePath" type="text" placeholder="e.g. route_exports/himachal_to_maharashtra_alt_1.geojson"/>
+        <button id="loadPathBtn">Load</button>
+    </div>
+    <div style="margin-top:8px;">
+        <label><strong>Or upload route GeoJSON</strong></label><br/>
+        <input id="routeFile" type="file" accept="application/geo+json,.geojson,application/json"/>
+    </div>
+    <div style="margin-top:8px; font-size:12px; color:#444;">
+        Tip: Exports are saved in <code>route_exports/</code>
+    </div>
+    <div id="routeInfo" style="margin-top:8px; font-size:12px;"></div>
+    <div style="margin-top:6px;">
+        <button id="clearRoutesBtn">Clear routes</button>
+    </div>
+  </div>
 <div class="legend" id="legend"><strong>Disasters</strong></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     var map = L.map('map').setView([22.5, 79.0], 5);
+    var routesLayer = L.layerGroup().addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -132,6 +173,103 @@
 
         var group = new L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.2));
+    });
+
+    // ---------- Route visualization helpers ----------
+    function styleRouteFeature(feature) {
+        var isSafe = true;
+        if (feature && feature.properties && typeof feature.properties.is_safe !== 'undefined') {
+            isSafe = !!feature.properties.is_safe;
+        }
+        return {
+            color: isSafe ? '#2e7d32' : '#c62828',
+            weight: 4,
+            opacity: 0.9,
+            dashArray: isSafe ? null : '6,6'
+        };
+    }
+
+    function addRouteGeoJSON(geojson) {
+        // Support both Feature and FeatureCollection
+        var layer;
+        if (geojson.type === 'FeatureCollection') {
+            layer = L.geoJSON(geojson, {
+                style: styleRouteFeature,
+                onEachFeature: function (feature, lyr) {
+                    var p = feature.properties || {};
+                    var name = p.name || 'Route';
+                    var dist = p.distance_km || p.distance || 0;
+                    var dur = p.duration_hours || p.duration || 0;
+                    var risk = typeof p.risk_score !== 'undefined' ? p.risk_score : 'n/a';
+                    var safe = typeof p.is_safe !== 'undefined' ? p.is_safe : true;
+                    lyr.bindPopup(
+                        `<strong>${name}</strong><br/>` +
+                        `Distance: ${Number(dist).toFixed(1)} km<br/>` +
+                        `Duration: ${Number(dur).toFixed(2)} h<br/>` +
+                        `Safe: ${safe ? 'Yes' : 'No'}<br/>` +
+                        `Risk score: ${risk}`
+                    );
+                }
+            });
+        } else if (geojson.type === 'Feature') {
+            layer = L.geoJSON(geojson, { style: styleRouteFeature });
+        } else {
+            // Minimal wrapper if the file is a bare geometry
+            layer = L.geoJSON({ type: 'Feature', geometry: geojson }, { style: styleRouteFeature });
+        }
+        routesLayer.addLayer(layer);
+        try {
+            map.fitBounds(layer.getBounds().pad(0.2));
+        } catch(e) {}
+        return layer;
+    }
+
+    function loadRouteFromPath(path) {
+        const info = document.getElementById('routeInfo');
+        info.textContent = 'Loading: ' + path + ' ...';
+        fetch(path)
+            .then(resp => {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.json();
+            })
+            .then(json => {
+                addRouteGeoJSON(json);
+                info.textContent = 'Loaded: ' + path;
+            })
+            .catch(err => {
+                info.textContent = 'Failed to load ' + path + ': ' + err.message;
+            });
+    }
+
+    function handleFileUpload(file) {
+        const info = document.getElementById('routeInfo');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                addRouteGeoJSON(json);
+                info.textContent = 'Loaded file: ' + (file.name || 'uploaded');
+            } catch (err) {
+                info.textContent = 'Invalid GeoJSON: ' + err.message;
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Wire up controls
+    document.getElementById('loadPathBtn').addEventListener('click', function() {
+        const p = document.getElementById('routePath').value.trim();
+        if (p) loadRouteFromPath(p);
+    });
+    document.getElementById('routeFile').addEventListener('change', function(evt) {
+        if (evt.target.files && evt.target.files[0]) {
+            handleFileUpload(evt.target.files[0]);
+            evt.target.value = '';
+        }
+    });
+    document.getElementById('clearRoutesBtn').addEventListener('click', function() {
+        routesLayer.clearLayers();
+        document.getElementById('routeInfo').textContent = '';
     });
 </script>
 </body>

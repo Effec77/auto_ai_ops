@@ -220,9 +220,63 @@ def validate_route_realtime(route, weighted_zones, critical_threshold=CRITICAL_T
     return True, f"Clear (risk={score:.1f}, buffer={buffer_km}km)", score, status_details
 
 # ---------- VISUAL DEBUGGING FUNCTIONS ----------
-def export_route_to_geojson(route, filename, route_info=None):
-    """Export route coordinates to GeoJSON for visual debugging"""
+def export_route_geojson(route, filename, risk_level=0, rerouted=False, route_info=None):
+    """
+    Smart GeoJSON export with risk-based styling and metadata for frontend integration.
+    
+    Args:
+        route: Route dictionary with geometry and summary
+        filename: Output filename
+        risk_level: Risk score (0-150+)
+        rerouted: Whether this is a rerouted path
+        route_info: Additional route metadata
+    """
     route_info = route_info or {}
+    
+    # Determine color based on risk level and reroute status
+    def get_route_color(risk, is_rerouted):
+        if is_rerouted:
+            if risk <= 25:
+                return "#fbbf24"  # Yellow - low risk reroute
+            elif risk <= 75:
+                return "#f97316"  # Orange - medium risk reroute
+            else:
+                return "#dc2626"  # Red - high risk reroute
+        else:
+            if risk == 0:
+                return "#2563eb"  # Blue - safe primary route
+            elif risk <= 25:
+                return "#16a34a"  # Green - low risk primary
+            elif risk <= 75:
+                return "#f59e0b"  # Amber - medium risk primary
+            else:
+                return "#dc2626"  # Red - high risk primary
+    
+    # Determine route style
+    color = get_route_color(risk_level, rerouted)
+    dash_array = "10,5" if rerouted else None
+    weight = 5 if rerouted else 4
+    
+    # Enhanced properties for frontend styling and tooltips
+    properties = {
+        "name": route_info.get("name", "Route"),
+        "distance_km": route["summary"].get("distance", 0),
+        "duration_hours": route["summary"].get("duration", 0),
+        "risk_level": risk_level,
+        "risk_score": risk_level,  # Alias for backward compatibility
+        "is_safe": risk_level < CRITICAL_THRESHOLD,
+        "rerouted": rerouted,
+        "route_type": route_info.get("route_type", "rerouted" if rerouted else "original"),
+        "color": color,
+        "weight": weight,
+        "dashArray": dash_array,
+        "opacity": 0.8,
+        "affected_zones": route_info.get("affected_zones", 0),
+        "disaster_scenario": route_info.get("disaster_scenario", ""),
+        "reroute_success": route_info.get("reroute_success", rerouted),
+        "export_time": datetime.now().isoformat(),
+        **route_info
+    }
     
     geojson_data = {
         "type": "FeatureCollection",
@@ -232,15 +286,7 @@ def export_route_to_geojson(route, filename, route_info=None):
                 "type": "LineString",
                 "coordinates": route["geometry"]["coordinates"]
             },
-            "properties": {
-                "name": route_info.get("name", "Route"),
-                "distance_km": route["summary"].get("distance", 0),
-                "duration_hours": route["summary"].get("duration", 0),
-                "risk_score": route_info.get("risk_score", 0),
-                "is_safe": route_info.get("is_safe", True),
-                "export_time": datetime.now().isoformat(),
-                **route_info
-            }
+            "properties": properties
         }]
     }
     
@@ -248,20 +294,41 @@ def export_route_to_geojson(route, filename, route_info=None):
     with open(filepath, 'w') as f:
         json.dump(geojson_data, f, indent=2)
     
-    print(f"📄 Exported route to: {filepath}")
+    route_type_emoji = "🔄" if rerouted else "📍"
+    risk_emoji = "🚨" if risk_level >= CRITICAL_THRESHOLD else "✅"
+    print(f"📄 {route_type_emoji} Exported {properties['route_type']} route: {filepath}")
+    print(f"    {risk_emoji} Risk: {risk_level}, Color: {color}, Zones: {properties['affected_zones']}")
+    
     return filepath
 
+# Backward compatibility wrapper
+def export_route_to_geojson(route, filename, route_info=None):
+    """Legacy function for backward compatibility"""
+    route_info = route_info or {}
+    risk_level = route_info.get("risk_score", 0)
+    rerouted = route_info.get("reroute_success", False)
+    return export_route_geojson(route, filename, risk_level, rerouted, route_info)
+
 def export_all_alternatives_to_geojson(routes, base_filename, route_name):
-    """Export all route alternatives for comparison"""
+    """Export all route alternatives for comparison with enhanced styling"""
     for i, route in enumerate(routes):
         filename = f"{base_filename}_alt_{i+1}.geojson"
-        route_info = {
-            "name": f"{route_name} - Alternative {i+1}",
-            "alternative_number": i+1,
-            "total_alternatives": len(routes),
-            "route_type": "original"
-        }
-        export_route_to_geojson(route, filename, route_info)
+        
+        # Calculate risk for this route (assuming no disasters initially)
+        risk_score = 0  # Will be calculated if disasters are present
+        
+        export_route_geojson(
+            route=route,
+            filename=filename,
+            risk_level=risk_score,
+            rerouted=False,
+            route_info={
+                "name": f"{route_name} - Alternative {i+1}",
+                "alternative_number": i+1,
+                "total_alternatives": len(routes),
+                "route_type": "original"
+            }
+        )
 
 # ---------- ENHANCED ORS ROUTING ----------
 def test_ors_api_key():
@@ -672,7 +739,7 @@ def compute_reroute_with_avoid(start, end, avoid_geojson):
     return None
 
 def validate_route_quality(route, start, end):
-    """Check if route makes geographic sense (endpoints + over-water heuristic)"""
+    """Enhanced route quality validation for rerouted paths"""
     coords = route["geometry"]["coordinates"]
     if len(coords) < 2:
         return False, "Route has insufficient coordinates"
@@ -680,6 +747,7 @@ def validate_route_quality(route, start, end):
     route_start = coords[0]
     route_end = coords[-1]
 
+    # Check endpoint accuracy
     start_deviation = haversine(start[1], start[0], route_start[1], route_start[0])
     end_deviation = haversine(end[1], end[0], route_end[1], route_end[0])
     if start_deviation > 50:
@@ -687,18 +755,48 @@ def validate_route_quality(route, start, end):
     if end_deviation > 50:
         return False, f"Route end deviates {end_deviation:.1f}km from expected"
 
-    # Over-water heuristic: naive check using long straight segment ratio
-    # If polyline is almost a straight line over > 500km and crosses coastline bbox, flag
+    # Check route distance reasonableness
+    route_distance = route["summary"].get("distance", 0)
+    direct_distance = haversine(start[1], start[0], end[1], end[0])
+    
+    if route_distance > direct_distance * 4:  # More than 4x direct distance is suspicious
+        return False, f"Route too long: {route_distance:.1f}km vs {direct_distance:.1f}km direct (ratio: {route_distance/direct_distance:.1f}x)"
+    
+    # Over-water heuristic: check for suspiciously straight long segments
     ls = LineString(coords)
     total_len = ls.length
-    if total_len > 5.0:  # crude degree scale; LineString length here is in coordinate units
-        # Compare with bounding box diagonal; if very straight, likely oversimplified
+    if total_len > 5.0:  # crude degree scale
         minx, miny, maxx, maxy = ls.bounds
         bbox_diag = math.hypot(maxx - minx, maxy - miny)
         if bbox_diag > 8.0 and total_len / bbox_diag < 1.2:
             return False, "Route appears too straight over long distance (likely over water)"
 
+    # Check for reasonable coordinate density (avoid undersampled routes)
+    if len(coords) < 10 and route_distance > 100:
+        return False, f"Route undersampled: only {len(coords)} points for {route_distance:.1f}km"
+
     return True, "Route quality validated"
+
+def validate_reroute_quality(rerouted_route, original_route, start, end):
+    """Specific validation for rerouted paths to ensure they're meaningful alternatives"""
+    # Basic quality check
+    quality_ok, quality_msg = validate_route_quality(rerouted_route, start, end)
+    if not quality_ok:
+        return False, f"Quality check failed: {quality_msg}"
+    
+    # Check that reroute is actually different from original
+    reroute_distance = rerouted_route["summary"].get("distance", 0)
+    original_distance = original_route["summary"].get("distance", 0)
+    
+    distance_diff = abs(reroute_distance - original_distance)
+    if distance_diff < original_distance * 0.05:  # Less than 5% difference
+        return False, f"Reroute too similar to original: {distance_diff:.1f}km difference"
+    
+    # Check that reroute isn't excessively longer
+    if reroute_distance > original_distance * 2.5:  # More than 2.5x original
+        return False, f"Reroute too long: {reroute_distance:.1f}km vs {original_distance:.1f}km original"
+    
+    return True, f"Reroute validated: {reroute_distance:.1f}km vs {original_distance:.1f}km original"
 
 # ---------- ENHANCED SMART REROUTING CLASS ----------
 class EnhancedSmartReroutingEngine:
@@ -859,36 +957,54 @@ class EnhancedSmartReroutingEngine:
                 if reroute_success and rerouted:
                     print(f"    ✅ REROUTE SUCCESS: {reroute_message}")
                     
+                    # Validate reroute quality
+                    reroute_quality_ok, reroute_quality_msg = validate_reroute_quality(
+                        rerouted, best_route, start, end
+                    )
+                    
+                    if not reroute_quality_ok:
+                        print(f"    ⚠️  Reroute quality issue: {reroute_quality_msg}")
+                    
                     # Validate the rerouted path doesn't still hit disasters
                     reroute_ok, reroute_msg, reroute_score, reroute_details = validate_route_realtime(
                         rerouted, self.disaster_zones, buffer_km=recommended_buffer
                     )
                     
                     rerouted_filename = f"{route_name.lower().replace(' ', '_')}_rerouted_{scenario['description'].lower().replace(' ', '_')}.geojson"
-                    export_route_to_geojson(rerouted, rerouted_filename, {
-                        "name": f"{route_name} - Rerouted avoiding {scenario['description']}",
-                        "risk_score": reroute_score,
-                        "is_safe": reroute_ok,
-                        "disaster_scenario": scenario['description'],
-                        "affected_zones": len(reroute_details['affected_zones']),
-                        "original_risk": score,
-                        "reroute_success": True,
-                        "route_type": "rerouted"
-                    })
+                    export_route_geojson(
+                        route=rerouted,
+                        filename=rerouted_filename,
+                        risk_level=reroute_score,
+                        rerouted=True,
+                        route_info={
+                            "name": f"{route_name} - Rerouted avoiding {scenario['description']}",
+                            "disaster_scenario": scenario['description'],
+                            "affected_zones": len(reroute_details['affected_zones']),
+                            "original_risk": score,
+                            "reroute_success": True,
+                            "route_type": "rerouted",
+                            "quality_validated": reroute_quality_ok,
+                            "quality_message": reroute_quality_msg
+                        }
+                    )
                 else:
                     print(f"    ❌ REROUTE FAILED: {reroute_message}")
                     # Export compromised route if reroute failed
                     compromised_filename = f"{route_name.lower().replace(' ', '_')}_compromised_{scenario['description'].lower().replace(' ', '_')}.geojson"
-                    export_route_to_geojson(best_route, compromised_filename, {
-                        "name": f"{route_name} - Compromised by {scenario['description']}",
-                        "risk_score": score,
-                        "is_safe": False,
-                        "disaster_scenario": scenario['description'],
-                        "affected_zones": len(details['affected_zones']),
-                        "warning": "Reroute not possible",
-                        "reroute_success": False,
-                        "route_type": "compromised"
-                    })
+                    export_route_geojson(
+                        route=best_route,
+                        filename=compromised_filename,
+                        risk_level=score,
+                        rerouted=False,
+                        route_info={
+                            "name": f"{route_name} - Compromised by {scenario['description']}",
+                            "disaster_scenario": scenario['description'],
+                            "affected_zones": len(details['affected_zones']),
+                            "warning": "Reroute not possible",
+                            "reroute_success": False,
+                            "route_type": "compromised"
+                        }
+                    )
             
             # Restore original zones for next test
             self.disaster_zones = original_zones
@@ -1062,26 +1178,64 @@ class EnhancedSmartReroutingEngine:
             mid_lat = (start[1] + end[1]) / 2
             mid_lon = (start[0] + end[0]) / 2
             
-            # Try routing via nearby major hubs
-            potential_waypoints = [
-                [77.1025, 28.7041],   # Delhi
-                [72.8777, 19.0760],   # Mumbai  
-                [77.5946, 12.9716],   # Bengaluru
-                [78.4867, 17.3850],   # Hyderabad
-                [88.3639, 22.5726],   # Kolkata
-            ]
+            # Try routing via geographically logical hubs
+            # Select waypoints based on route geography
+            route_bearing = math.atan2(end[1] - start[1], end[0] - start[0])
             
-            # Find the closest hub to the midpoint
+            # Determine route type and select appropriate waypoints
+            start_lat, start_lon = start[1], start[0]
+            end_lat, end_lon = end[1], end[0]
+            
+            # Route-specific waypoint selection
+            if start_lat < 15 and end_lat > 25:  # South to North/Northeast (like Kerala to Arunachal)
+                potential_waypoints = [
+                    [77.5946, 12.9716],   # Bengaluru (South India hub)
+                    [78.4867, 17.3850],   # Hyderabad (Central India)
+                    [80.2707, 13.0827],   # Chennai (East coast)
+                    [88.3639, 22.5726],   # Kolkata (East India gateway)
+                    [91.7362, 26.1445],   # Guwahati (Northeast hub)
+                ]
+            elif start_lat > 25 and end_lat > 25:  # North to North (like Himachal to Rajasthan)
+                potential_waypoints = [
+                    [77.1025, 28.7041],   # Delhi
+                    [75.8577, 30.9000],   # Ludhiana (Punjab)
+                    [76.7794, 30.7333],   # Chandigarh
+                    [74.7973, 31.6340],   # Amritsar
+                    [75.7873, 26.9124],   # Jaipur (Rajasthan)
+                ]
+            else:  # General India-wide routes
+                potential_waypoints = [
+                    [77.1025, 28.7041],   # Delhi
+                    [72.8777, 19.0760],   # Mumbai
+                    [77.5946, 12.9716],   # Bengaluru
+                    [78.4867, 17.3850],   # Hyderabad
+                    [88.3639, 22.5726],   # Kolkata
+                    [91.7362, 26.1445],   # Guwahati
+                ]
+            
+            # Find waypoints that are reasonably close AND in the right direction
             best_waypoint = None
             min_distance = float('inf')
             
             for waypoint in potential_waypoints:
                 dist = haversine(mid_lat, mid_lon, waypoint[1], waypoint[0])
-                if dist < min_distance:
-                    min_distance = dist
-                    best_waypoint = waypoint
+                
+                # Check if waypoint is in reasonable corridor (not too far off the route)
+                waypoint_bearing = math.atan2(waypoint[1] - start[1], waypoint[0] - start[0])
+                bearing_diff = abs(route_bearing - waypoint_bearing)
+                
+                # Adjust constraints based on route length
+                route_distance = haversine(start[1], start[0], end[1], end[0])
+                max_distance = 300 if route_distance > 1500 else 200  # Longer routes allow farther waypoints
+                max_bearing_diff = math.pi/2 if route_distance > 1500 else math.pi/3  # 90° vs 60°
+                
+                # Only consider waypoints within distance and bearing constraints
+                if dist < max_distance and bearing_diff < max_bearing_diff:
+                    if dist < min_distance:
+                        min_distance = dist
+                        best_waypoint = waypoint
             
-            if best_waypoint and min_distance < 500:  # Only if reasonably close
+            if best_waypoint:
                 print(f"      Trying alternative via major hub: [{best_waypoint[0]:.3f}, {best_waypoint[1]:.3f}]")
                 
                 leg1_routes = fetch_all_ors_routes(start, best_waypoint, max_alternatives=1)
@@ -1117,25 +1271,25 @@ class EnhancedSmartReroutingEngine:
             avg_lat = sum(zone.get("location", [0, 0])[1] for zone in affected_zones) / len(affected_zones)
             avg_lon = sum(zone.get("location", [0, 0])[0] for zone in affected_zones) / len(affected_zones)
             
-            # Create a simple 3-point route that goes around the disaster area
+            # Create a logical detour around the disaster area
             mid_lat = (start[1] + end[1]) / 2
             mid_lon = (start[0] + end[0]) / 2
             
-            # Offset the midpoint away from the disaster zone
-            offset_distance = 1.0  # degrees (~100km)
+            # Use smaller, more reasonable offset
+            offset_distance = 0.3  # degrees (~30km) - much more reasonable
             
             # Calculate direction from disaster to midpoint
             dx = mid_lon - avg_lon
             dy = mid_lat - avg_lat
             length = math.sqrt(dx*dx + dy*dy)
             
-            if length > 0:
+            if length > 0.1:  # Only if disaster is not too close to midpoint
                 # Normalize and apply offset
                 dx /= length
                 dy /= length
                 offset_point = [mid_lon + dx * offset_distance, mid_lat + dy * offset_distance]
             else:
-                # Fallback: offset perpendicular to start-end line
+                # Fallback: offset perpendicular to start-end line (smaller offset)
                 bearing = math.atan2(end[1] - start[1], end[0] - start[0])
                 offset_point = [
                     mid_lon + offset_distance * math.cos(bearing + math.pi/2),

@@ -46,6 +46,71 @@
             padding: 6px 10px;
             margin-left: 6px;
         }
+
+        /* Enhanced route tooltip styling */
+        .route-tooltip {
+            background: rgba(0, 0, 0, 0.8) !important;
+            border: none !important;
+            border-radius: 4px !important;
+            color: white !important;
+            font-size: 12px !important;
+            padding: 8px !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+        }
+
+        /* Enhanced route popup styling */
+        .route-popup .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .route-popup .leaflet-popup-content {
+            margin: 12px 16px;
+            line-height: 1.4;
+        }
+
+        /* Route legend */
+        .route-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            font-size: 13px;
+            z-index: 1000;
+        }
+
+        .route-legend h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .route-legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .route-legend-line {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            border-radius: 1px;
+        }
+
+        .route-legend-line.dashed {
+            background-image: repeating-linear-gradient(
+                to right,
+                currentColor,
+                currentColor 6px,
+                transparent 6px,
+                transparent 12px
+            );
+        }
     </style>
 </head>
 <body>
@@ -59,6 +124,18 @@
     <div style="margin-top:8px;">
         <label><strong>Or upload route GeoJSON</strong></label><br/>
         <input id="routeFile" type="file" accept="application/geo+json,.geojson,application/json"/>
+        <div id="dropZone" style="
+            margin-top:6px; 
+            padding:8px; 
+            border:2px dashed #ccc; 
+            border-radius:4px; 
+            text-align:center; 
+            font-size:11px; 
+            color:#666;
+            cursor:pointer;
+        ">
+            📁 Or drag & drop GeoJSON files here
+        </div>
     </div>
     <div style="margin-top:8px; font-size:12px; color:#444;">
         Tip: Exports are saved in <code>route_exports/</code>
@@ -67,8 +144,44 @@
     <div style="margin-top:6px;">
         <button id="clearRoutesBtn">Clear routes</button>
     </div>
+    <div style="margin-top:8px;">
+        <label><strong>Quick Load Examples</strong></label><br/>
+        <button onclick="loadExampleRoute('original')" style="font-size:11px; padding:4px 6px; margin:2px;">📍 Original</button>
+        <button onclick="loadExampleRoute('rerouted')" style="font-size:11px; padding:4px 6px; margin:2px;">🔄 Rerouted</button>
+        <button onclick="loadExampleRoute('compromised')" style="font-size:11px; padding:4px 6px; margin:2px;">⚠️ Compromised</button>
+    </div>
+    <div style="margin-top:6px; font-size:11px; color:#666;">
+        <strong>💡 CORS Issue?</strong><br/>
+        Start local server: <code style="font-size:10px;">python -m http.server 8000</code><br/>
+        Then open: <code style="font-size:10px;">localhost:8000/frontend/map.html</code>
+    </div>
   </div>
 <div class="legend" id="legend"><strong>Disasters</strong></div>
+
+<!-- Route Legend -->
+<div class="route-legend">
+    <h4>🗺️ Route Types</h4>
+    <div class="route-legend-item">
+        <div class="route-legend-line" style="background-color: #2563eb;"></div>
+        <span>📍 Original (Safe)</span>
+    </div>
+    <div class="route-legend-item">
+        <div class="route-legend-line" style="background-color: #16a34a;"></div>
+        <span>📍 Original (Low Risk)</span>
+    </div>
+    <div class="route-legend-item">
+        <div class="route-legend-line dashed" style="color: #fbbf24;"></div>
+        <span>🔄 Rerouted (Low Risk)</span>
+    </div>
+    <div class="route-legend-item">
+        <div class="route-legend-line dashed" style="color: #f97316;"></div>
+        <span>🔄 Rerouted (Medium Risk)</span>
+    </div>
+    <div class="route-legend-item">
+        <div class="route-legend-line dashed" style="color: #dc2626;"></div>
+        <span>⚠️ High Risk / Compromised</span>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -175,48 +288,180 @@
         map.fitBounds(group.getBounds().pad(0.2));
     });
 
-    // ---------- Route visualization helpers ----------
+    // ---------- Enhanced Route Visualization ----------
+    
+    /**
+     * Enhanced styling function for routes based on risk level and type
+     */
     function styleRouteFeature(feature) {
-        var isSafe = true;
-        if (feature && feature.properties && typeof feature.properties.is_safe !== 'undefined') {
-            isSafe = !!feature.properties.is_safe;
-        }
+        const props = feature.properties || {};
+        
+        // Use color from backend if available, otherwise calculate
+        const color = props.color || calculateRouteColor(props.risk_level || props.risk_score || 0, props.rerouted || false);
+        
         return {
-            color: isSafe ? '#2e7d32' : '#c62828',
-            weight: 4,
-            opacity: 0.9,
-            dashArray: isSafe ? null : '6,6'
+            color: color,
+            weight: props.weight || (props.rerouted ? 5 : 4),
+            opacity: props.opacity || 0.8,
+            dashArray: props.dashArray || (props.rerouted ? "10,5" : null),
+            lineCap: 'round',
+            lineJoin: 'round'
         };
     }
 
+    /**
+     * Calculate route color based on risk level and reroute status
+     */
+    function calculateRouteColor(riskLevel, isRerouted) {
+        if (isRerouted) {
+            if (riskLevel <= 25) return "#fbbf24";  // Yellow - low risk reroute
+            if (riskLevel <= 75) return "#f97316";  // Orange - medium risk reroute
+            return "#dc2626";                       // Red - high risk reroute
+        } else {
+            if (riskLevel === 0) return "#2563eb";  // Blue - safe primary route
+            if (riskLevel <= 25) return "#16a34a";  // Green - low risk primary
+            if (riskLevel <= 75) return "#f59e0b";  // Amber - medium risk primary
+            return "#dc2626";                       // Red - high risk primary
+        }
+    }
+
+    /**
+     * Get icon for route type
+     */
+    function getRouteTypeIcon(routeType, isRerouted) {
+        switch(routeType) {
+            case 'original': return '📍';
+            case 'rerouted': return '🔄';
+            case 'compromised': return '⚠️';
+            default: return isRerouted ? '🔄' : '📍';
+        }
+    }
+
+    /**
+     * Get human-readable risk level text
+     */
+    function getRiskLevelText(riskLevel) {
+        if (riskLevel === 0) return "No Risk";
+        if (riskLevel <= 25) return "Low Risk";
+        if (riskLevel <= 75) return "Medium Risk";
+        if (riskLevel <= 150) return "High Risk";
+        return "Critical Risk";
+    }
+
+    /**
+     * Enhanced route loading with interactive tooltips and popups
+     */
     function addRouteGeoJSON(geojson) {
-        // Support both Feature and FeatureCollection
         var layer;
         if (geojson.type === 'FeatureCollection') {
             layer = L.geoJSON(geojson, {
                 style: styleRouteFeature,
                 onEachFeature: function (feature, lyr) {
-                    var p = feature.properties || {};
-                    var name = p.name || 'Route';
-                    var dist = p.distance_km || p.distance || 0;
-                    var dur = p.duration_hours || p.duration || 0;
-                    var risk = typeof p.risk_score !== 'undefined' ? p.risk_score : 'n/a';
-                    var safe = typeof p.is_safe !== 'undefined' ? p.is_safe : true;
-                    lyr.bindPopup(
-                        `<strong>${name}</strong><br/>` +
-                        `Distance: ${Number(dist).toFixed(1)} km<br/>` +
-                        `Duration: ${Number(dur).toFixed(2)} h<br/>` +
-                        `Safe: ${safe ? 'Yes' : 'No'}<br/>` +
-                        `Risk score: ${risk}`
-                    );
+                    const props = feature.properties || {};
+                    
+                    // Enhanced tooltip for hover
+                    const routeTypeIcon = getRouteTypeIcon(props.route_type, props.rerouted);
+                    const riskIcon = (props.risk_level || props.risk_score || 0) >= 15 ? "🚨" : "✅";
+                    const routeType = props.route_type || (props.rerouted ? 'rerouted' : 'original');
+                    
+                    const tooltipContent = `
+                        <div style="font-size: 12px;">
+                            <strong>${routeTypeIcon} ${routeType.charAt(0).toUpperCase() + routeType.slice(1)} Route</strong><br>
+                            ${riskIcon} Risk Level: ${props.risk_level || props.risk_score || 0}<br>
+                            📏 Distance: ${Number(props.distance_km || props.distance || 0).toFixed(1)} km
+                        </div>
+                    `;
+                    
+                    lyr.bindTooltip(tooltipContent, {
+                        permanent: false,
+                        direction: 'top',
+                        offset: [0, -10],
+                        className: 'route-tooltip'
+                    });
+                    
+                    // Enhanced popup for click
+                    const name = props.name || 'Route';
+                    const dist = props.distance_km || props.distance || 0;
+                    const dur = props.duration_hours || props.duration || 0;
+                    const riskLevel = props.risk_level || props.risk_score || 0;
+                    const safe = typeof props.is_safe !== 'undefined' ? props.is_safe : true;
+                    const safetyStatus = safe ? "✅ Safe Route" : "🚨 Compromised Route";
+                    const riskLevelText = getRiskLevelText(riskLevel);
+                    
+                    let popupContent = `
+                        <div style="font-family: Arial, sans-serif; max-width: 280px;">
+                            <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
+                                ${routeTypeIcon} ${name}
+                            </h3>
+                            <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; margin: 10px 0;">
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Status:</strong> ${safetyStatus}</p>
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Distance:</strong> ${Number(dist).toFixed(1)} km</p>
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Duration:</strong> ${Number(dur).toFixed(1)} hours</p>
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Risk Level:</strong> ${riskLevelText} (${riskLevel})</p>
+                            </div>
+                    `;
+                    
+                    // Add disaster information if present
+                    if (props.disaster_scenario) {
+                        popupContent += `
+                            <div style="background: #fef3c7; padding: 8px; border-radius: 4px; border-left: 4px solid #f59e0b; margin: 10px 0;">
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Disaster:</strong> ${props.disaster_scenario}</p>
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Affected Zones:</strong> ${props.affected_zones || 0}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add reroute information
+                    if (props.rerouted) {
+                        const rerouteStatus = props.reroute_success ? "✅ Successfully Rerouted" : "❌ Reroute Failed";
+                        popupContent += `
+                            <div style="background: #dcfce7; padding: 8px; border-radius: 4px; border-left: 4px solid #16a34a; margin: 10px 0;">
+                                <p style="margin: 4px 0; font-size: 14px;"><strong>Reroute Status:</strong> ${rerouteStatus}</p>
+                                ${props.original_risk ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Original Risk:</strong> ${props.original_risk}</p>` : ''}
+                                ${props.quality_validated !== undefined ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Quality Check:</strong> ${props.quality_validated ? '✅ Passed' : '⚠️ Issues detected'}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    popupContent += '</div>';
+                    
+                    lyr.bindPopup(popupContent, {
+                        maxWidth: 300,
+                        className: 'route-popup'
+                    });
+                    
+                    // Add hover effects
+                    lyr.on({
+                        mouseover: function(e) {
+                            this.setStyle({
+                                weight: (props.weight || 4) + 2,
+                                opacity: 1.0
+                            });
+                        },
+                        mouseout: function(e) {
+                            this.setStyle({
+                                weight: props.weight || 4,
+                                opacity: props.opacity || 0.8
+                            });
+                        }
+                    });
                 }
             });
         } else if (geojson.type === 'Feature') {
-            layer = L.geoJSON(geojson, { style: styleRouteFeature });
+            layer = L.geoJSON(geojson, { 
+                style: styleRouteFeature,
+                onEachFeature: function(feature, lyr) {
+                    // Apply same enhanced features for single features
+                    const props = feature.properties || {};
+                    const routeTypeIcon = getRouteTypeIcon(props.route_type, props.rerouted);
+                    lyr.bindPopup(`${routeTypeIcon} ${props.name || 'Route'}`);
+                }
+            });
         } else {
             // Minimal wrapper if the file is a bare geometry
             layer = L.geoJSON({ type: 'Feature', geometry: geojson }, { style: styleRouteFeature });
         }
+        
         routesLayer.addLayer(layer);
         try {
             map.fitBounds(layer.getBounds().pad(0.2));
@@ -227,9 +472,27 @@
     function loadRouteFromPath(path) {
         const info = document.getElementById('routeInfo');
         info.textContent = 'Loading: ' + path + ' ...';
-        fetch(path)
+        
+        // Handle different path formats
+        let fullPath = path;
+        if (!path.startsWith('http') && !path.startsWith('/') && !path.startsWith('./')) {
+            // Try different relative path approaches
+            const possiblePaths = [
+                path,                    // As entered
+                './' + path,            // Relative to current directory
+                '../' + path,           // One level up
+                '../../' + path         // Two levels up (if in subdirectory)
+            ];
+            
+            // Try each path
+            tryLoadPaths(possiblePaths, 0, info);
+            return;
+        }
+        
+        // Direct fetch for absolute paths
+        fetch(fullPath)
             .then(resp => {
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
                 return resp.json();
             })
             .then(json => {
@@ -237,7 +500,46 @@
                 info.textContent = 'Loaded: ' + path;
             })
             .catch(err => {
-                info.textContent = 'Failed to load ' + path + ': ' + err.message;
+                info.innerHTML = `
+                    <div style="color: #dc2626;">
+                        <strong>Failed to load:</strong> ${path}<br>
+                        <small>Error: ${err.message}</small><br>
+                        <small style="color: #6b7280;">
+                            💡 Try: Use file upload instead, or serve via HTTP server
+                        </small>
+                    </div>
+                `;
+            });
+    }
+    
+    function tryLoadPaths(paths, index, info) {
+        if (index >= paths.length) {
+            info.innerHTML = `
+                <div style="color: #dc2626;">
+                    <strong>Failed to load route</strong><br>
+                    <small>Tried paths: ${paths.join(', ')}</small><br>
+                    <small style="color: #6b7280;">
+                        💡 Use file upload or start a local server:<br>
+                        <code>python -m http.server 8000</code>
+                    </small>
+                </div>
+            `;
+            return;
+        }
+        
+        const currentPath = paths[index];
+        fetch(currentPath)
+            .then(resp => {
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                return resp.json();
+            })
+            .then(json => {
+                addRouteGeoJSON(json);
+                info.textContent = 'Loaded: ' + currentPath;
+            })
+            .catch(err => {
+                // Try next path
+                tryLoadPaths(paths, index + 1, info);
             });
     }
 
@@ -267,10 +569,85 @@
             evt.target.value = '';
         }
     });
+    
+    // Drag and drop functionality
+    const dropZone = document.getElementById('dropZone');
+    
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#2563eb';
+        dropZone.style.backgroundColor = '#eff6ff';
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ccc';
+        dropZone.style.backgroundColor = 'transparent';
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ccc';
+        dropZone.style.backgroundColor = 'transparent';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+    
+    dropZone.addEventListener('click', function() {
+        document.getElementById('routeFile').click();
+    });
     document.getElementById('clearRoutesBtn').addEventListener('click', function() {
         routesLayer.clearLayers();
         document.getElementById('routeInfo').textContent = '';
     });
+
+    // Quick load example routes
+    function loadExampleRoute(type) {
+        const examples = {
+            'original': 'route_exports/himachal_to_maharashtra_alt_1.geojson',
+            'rerouted': 'route_exports/himachal_to_rajasthan_rerouted_major_flooding.geojson',
+            'compromised': 'route_exports/himachal_to_rajasthan_compromised_critical_bridge_collapse.geojson'
+        };
+        
+        const path = examples[type];
+        if (path) {
+            document.getElementById('routePath').value = path;
+            loadRouteFromPath(path);
+        }
+    }
+    
+    // Check if we can access route_exports directory
+    function checkRouteExportsAccess() {
+        fetch('route_exports/')
+            .then(resp => {
+                if (resp.ok) {
+                    console.log('✅ Route exports directory accessible');
+                } else {
+                    console.log('⚠️ Route exports directory not accessible via HTTP');
+                }
+            })
+            .catch(err => {
+                console.log('❌ CORS restriction detected. Use file upload or local server.');
+            });
+    }
+    
+    // Run check on page load
+    checkRouteExportsAccess();
+
+    // Load multiple routes for comparison
+    function loadRouteComparison() {
+        const routes = [
+            'route_exports/himachal_to_rajasthan_alt_1.geojson',
+            'route_exports/himachal_to_rajasthan_rerouted_major_flooding.geojson'
+        ];
+        
+        routes.forEach(route => {
+            loadRouteFromPath(route);
+        });
+    }
 </script>
 </body>
 </html>

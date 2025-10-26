@@ -22612,12 +22612,21 @@
         "name": "Himachal to Rajasthan - Alternative 1",
         "distance_km": 570.8261,
         "duration_hours": 6.422638888888889,
+        "risk_level": 0,
         "risk_score": 0,
         "is_safe": true,
-        "export_time": "2025-09-08T22:35:23.529785",
+        "rerouted": false,
+        "route_type": "original",
+        "color": "#2563eb",
+        "weight": 4,
+        "dashArray": null,
+        "opacity": 0.8,
+        "affected_zones": 0,
+        "disaster_scenario": "",
+        "reroute_success": false,
+        "export_time": "2025-09-14T17:37:46.185622",
         "alternative_number": 1,
-        "total_alternatives": 1,
-        "route_type": "original"
+        "total_alternatives": 1
       }
     }
   ]

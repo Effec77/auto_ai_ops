@@ -57308,12 +57308,21 @@
         "name": "Himachal to Maharashtra - Alternative 1",
         "distance_km": 1757.0306999999998,
         "duration_hours": 20.94094444444444,
+        "risk_level": 0,
         "risk_score": 0,
         "is_safe": true,
-        "export_time": "2025-09-08T22:34:02.595217",
+        "rerouted": false,
+        "route_type": "original",
+        "color": "#2563eb",
+        "weight": 4,
+        "dashArray": null,
+        "opacity": 0.8,
+        "affected_zones": 0,
+        "disaster_scenario": "",
+        "reroute_success": false,
+        "export_time": "2025-09-14T17:37:08.482473",
         "alternative_number": 1,
-        "total_alternatives": 1,
-        "route_type": "original"
+        "total_alternatives": 1
       }
     }
   ]

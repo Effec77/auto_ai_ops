@@ -215948,12 +215948,21 @@
         "name": "Kerala to Arunachal - Alternative 1",
         "distance_km": 6625.7323,
         "duration_hours": 80.63697222222223,
+        "risk_level": 0,
         "risk_score": 0,
         "is_safe": true,
-        "export_time": "2025-09-08T22:37:54.856551",
+        "rerouted": false,
+        "route_type": "original",
+        "color": "#2563eb",
+        "weight": 4,
+        "dashArray": null,
+        "opacity": 0.8,
+        "affected_zones": 0,
+        "disaster_scenario": "",
+        "reroute_success": false,
+        "export_time": "2025-09-14T17:40:43.493453",
         "alternative_number": 1,
-        "total_alternatives": 1,
-        "route_type": "original"
+        "total_alternatives": 1
       }
     }
   ]

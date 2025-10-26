@@ -27280,14 +27280,22 @@
         "name": "Himachal to Rajasthan - Rerouted avoiding Critical bridge collapse",
         "distance_km": 650.3485000000001,
         "duration_hours": 7.903111111111111,
+        "risk_level": 150,
         "risk_score": 150,
         "is_safe": false,
-        "export_time": "2025-09-08T22:36:17.726560",
-        "disaster_scenario": "Critical bridge collapse",
+        "rerouted": true,
+        "route_type": "rerouted",
+        "color": "#dc2626",
+        "weight": 5,
+        "dashArray": "10,5",
+        "opacity": 0.8,
         "affected_zones": 1,
-        "original_risk": 150,
+        "disaster_scenario": "Critical bridge collapse",
         "reroute_success": true,
-        "route_type": "rerouted"
+        "export_time": "2025-09-14T17:39:07.970066",
+        "original_risk": 150,
+        "quality_validated": true,
+        "quality_message": "Reroute validated: 650.3km vs 570.8km original"
       }
     }
   ]

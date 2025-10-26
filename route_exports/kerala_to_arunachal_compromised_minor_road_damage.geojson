@@ -215948,14 +215948,20 @@
         "name": "Kerala to Arunachal - Compromised by Minor road damage",
         "distance_km": 6625.7323,
         "duration_hours": 80.63697222222223,
+        "risk_level": 25,
         "risk_score": 25,
         "is_safe": false,
-        "export_time": "2025-09-08T22:24:23.739893",
-        "disaster_scenario": "Minor road damage",
+        "rerouted": false,
+        "route_type": "compromised",
+        "color": "#16a34a",
+        "weight": 4,
+        "dashArray": null,
+        "opacity": 0.8,
         "affected_zones": 1,
-        "warning": "Reroute not possible",
+        "disaster_scenario": "Minor road damage",
         "reroute_success": false,
-        "route_type": "compromised"
+        "export_time": "2025-09-14T17:42:23.359975",
+        "warning": "Reroute not possible"
       }
     }
   ]

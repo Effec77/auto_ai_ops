@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AidFlow AI - Route Browser</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; }
+        .route-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
+        .route-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: #f9f9f9; }
+        .route-card h3 { margin: 0 0 10px 0; color: #333; }
+        .route-type { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .original { background: #dbeafe; color: #1e40af; }
+        .rerouted { background: #fef3c7; color: #d97706; }
+        .compromised { background: #fee2e2; color: #dc2626; }
+        .load-btn { background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .load-btn:hover { background: #1d4ed8; }
+        .instructions { background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🗺️ AidFlow AI - Route Browser</h1>
+    
+    <div class="instructions">
+        <h3>📋 Instructions:</h3>
+        <ol>
+            <li><strong>Start Local Server:</strong> Run <code>start_server.bat</code> or <code>python -m http.server 8000</code></li>
+            <li><strong>Open Map:</strong> Go to <a href="http://localhost:8000/frontend/map.html" target="_blank">localhost:8000/frontend/map.html</a></li>
+            <li><strong>Load Routes:</strong> Click the "Load in Map" buttons below to copy paths</li>
+        </ol>
+    </div>
+
+    <div class="route-grid">
+        <!-- Original Routes -->
+        <div class="route-card">
+            <h3>📍 Himachal to Maharashtra</h3>
+            <span class="route-type original">ORIGINAL</span>
+            <p>Safe primary route - 1757.0 km</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_maharashtra_alt_1.geojson')">Load in Map</button>
+        </div>
+
+        <div class="route-card">
+            <h3>📍 Himachal to Rajasthan</h3>
+            <span class="route-type original">ORIGINAL</span>
+            <p>Safe primary route - 570.8 km</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_rajasthan_alt_1.geojson')">Load in Map</button>
+        </div>
+
+        <div class="route-card">
+            <h3>📍 Kerala to Arunachal</h3>
+            <span class="route-type original">ORIGINAL</span>
+            <p>Safe primary route - Long distance</p>
+            <button class="load-btn" onclick="copyPath('route_exports/kerala_to_arunachal_alt_1.geojson')">Load in Map</button>
+        </div>
+
+        <!-- Rerouted Routes -->
+        <div class="route-card">
+            <h3>🔄 Himachal to Rajasthan (Flooding)</h3>
+            <span class="route-type rerouted">REROUTED</span>
+            <p>Rerouted to avoid major flooding - 650.3 km</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_rajasthan_rerouted_major_flooding.geojson')">Load in Map</button>
+        </div>
+
+        <div class="route-card">
+            <h3>🔄 Himachal to Rajasthan (Bridge Collapse)</h3>
+            <span class="route-type rerouted">REROUTED</span>
+            <p>Rerouted to avoid critical bridge collapse</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_rajasthan_rerouted_critical_bridge_collapse.geojson')">Load in Map</button>
+        </div>
+
+        <div class="route-card">
+            <h3>🔄 Himachal to Maharashtra (Minor Damage)</h3>
+            <span class="route-type rerouted">REROUTED</span>
+            <p>Rerouted to avoid minor road damage</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_maharashtra_rerouted_minor_road_damage.geojson')">Load in Map</button>
+        </div>
+
+        <!-- Compromised Routes -->
+        <div class="route-card">
+            <h3>⚠️ Himachal to Rajasthan (Compromised)</h3>
+            <span class="route-type compromised">COMPROMISED</span>
+            <p>Route compromised by critical bridge collapse - reroute failed</p>
+            <button class="load-btn" onclick="copyPath('route_exports/himachal_to_rajasthan_compromised_critical_bridge_collapse.geojson')">Load in Map</button>
+        </div>
+
+        <div class="route-card">
+            <h3>⚠️ Kerala to Arunachal (Compromised)</h3>
+            <span class="route-type compromised">COMPROMISED</span>
+            <p>Route compromised by major flooding - reroute failed</p>
+            <button class="load-btn" onclick="copyPath('route_exports/kerala_to_arunachal_compromised_major_flooding.geojson')">Load in Map</button>
+        </div>
+    </div>
+
+    <script>
+        function copyPath(path) {
+            navigator.clipboard.writeText(path).then(() => {
+                alert('Path copied to clipboard: ' + path + '\n\nPaste this in the map\'s "Load route by path" field.');
+            }).catch(() => {
+                prompt('Copy this path:', path);
+            });
+        }
+    </script>
+</body>
+</html>
